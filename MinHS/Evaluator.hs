@@ -10,7 +10,7 @@ data Value = I Integer
            | B Bool
            | Nil
            | Cons Integer Value
-           | Clos VEnv Exp
+           | Clos VEnv String [String] Exp
            -- Others as needed
            deriving (Show)
 
@@ -27,7 +27,7 @@ evaluate bs = evalE E.empty (Let bs (Var "main"))
 
 
 evalE :: VEnv -> Exp -> Value
--- First we start with the eacy constants and boolean constructors
+-- First we start with the easy constants and boolean constructors
 -- We add Nil since it also fits the pattern
 evalE env (Num n)     = I n
 evalE env (Con str)  = case str of
@@ -54,7 +54,7 @@ evalE env (App (Prim Neg) e) = let v = evalE env e
                                       _   -> error "can only negate integers"
 
 --We address the construction of a list:
-eval env (App (App (Cons "Cons") e1) e2) = case evalE env e1 of
+evalE env (App (App (Con "Cons") e1) e2) = case evalE env e1 of
                                              I n -> Cons n (evalE env e2)
                                              _   -> error "Sorry, can only have lists of ints"
 
@@ -110,24 +110,35 @@ evalE env (If exp1 exp2 exp3) = case evalE env exp1 of
 -- When we evaluate things in the Let statement we need to add the let bindings to the environment.
 -- We want to enable multiple let bindings be applied to a single expression (TASK 4)
 evalE env (Let e1 e2) = case e1 of
-                              []                   -> evalE env e2
-                              (Bind str _ l e3):bs -> case l of
-                                                        []       -> let env' = E.add env (str, (evalE env e3))
-                                                                      in evalE env' (Let bs e2)
-                                                        arg_list -> let env' = E.add env (str, (Clos env e3))
+                              []                          -> evalE env e2
+                              (Bind str _ [] e3):bs       -> let env' = E.add env (str, (evalE env e3))
+                                                               in evalE env' (Let bs e2)
+                              (Bind str _ arg_list e3):bs -> let env' = E.add env (str, (Clos env str arg_list e3))
                                                                       in evalE env' (Let bs e2)
 -- May need to expand closures so I can feed the arg_list into it... I think it doesn't work otherwise...   
 
 
-{-                                      
+evalE env (Recfun (Bind str _ [] e)) =  let env' = E.add env (x,v)
+                                              v = evalE env' e
+                                         in v
 
-NOT EXACTLY CORRECT, BUT GIVES A GENERAL IDEA FOR ONE OF THE RECFUN JUDGEMENTS
 
-evalE env (Recfun x e)
-  let env' = E.add env (x,v)
-         v = evalE env' e
-    in v
+evalE env (Recfun (Bind str _ arg_list e)) = Clos env str arg_list e
 
+{- My attempt at just following the judgment in the spec exactly
 -}
+evalE env (App e1 e2) = let v1 = eval env e1
+                            v2 = eval env e2
+                            in case v1 of
+                                 Clos env' fn [x] ef -> let env1 = E.add env' (fn, v1)
+                                                            env2 = E.add env1 (x, v2)
+                                                          in evalE env2 ef
+                                 _                   -> error "should be a function"
 
+
+                                   --we need to add some kind of x = e2 to the environment then
+                                                     -- evaluate????
+                            
+
+                                            
 evalE env exp = error "implement me!"
