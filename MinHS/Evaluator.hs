@@ -54,14 +54,14 @@ evalE env (App (Prim Neg) e) = let v = evalE env e
                                       _   -> error "can only negate integers"
 
 --We address the list operations (other than Nil):
-evalE env (App (Prim op) x) = case evalE env x of
-                                Nil       -> case op of
+evalE env (App (Prim operator) x) = case evalE env x of
+                                Nil       -> case operator of
                                                Head -> error "empty list has no head, boo!"
                                                Tail -> error "empty list has no tail, boo!"
                                                Null -> B True
                                                _    -> error "op not defined for empty list"
                                          
-                                Cons v vs -> case op of
+                                Cons v vs -> case operator of
                                                Head -> I v
                                                Tail -> vs
                                                Null -> B False
@@ -73,46 +73,24 @@ evalE env (App (Prim op) x) = case evalE env x of
 
 --We address the primitive operations for integers:
 
-evalE env (App (App (Prim op) e1) e2) = case op of
-                                          Add ->  let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in I (v1 + v2)
-                                          Sub ->  let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in I (v1 - v2)
-                                          Mul ->  let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in I (v1 * v2)
-                                          Quot -> let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in if v2 == 0
-                                                        then error "div by zero ==> there is no god"
-                                                        else I (quot v1 v2)
-                                          Rem ->  let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in I (rem v1 v2)
-                                          Gt ->   let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in B (v1 > v2)
-                                          Ge ->   let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in B (v1 >= v2)
-                                          Lt ->   let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in B (v1 < v2)
-                                          Le ->   let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in B (v1 <= v2)
-                                          Eq ->   let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in B (v1 == v2)
-                                          Ne ->   let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in B (v1 /= v2)
-                                          Ge ->   let v1 = evalE env e1
-                                                      v2 = evalE env e2
-                                                    in B (v1 >= v2)
-                                          _  -> error "unknown operator..."
+evalE env (App (App (Prim operator) e1) e2) = case (evalE env e1, evalE env e2) of
+                                          (I v1, I v2) -> case operator of
+                                                            Add  -> I (v1 + v2)
+                                                            Sub  -> I (v1 - v2)
+                                                            Mul  -> I (v1 * v2)
+                                                            Quot -> case v2 of
+                                                                      0 ->  error "div by zero ==> there is no god"
+                                                                      _ ->  I (quot v1 v2)
+                                                            Rem  -> I (rem v1 v2)
+                                                            Gt   -> B (v1 > v2)
+                                                            Ge   -> B (v1 >= v2)
+                                                            Lt   -> B (v1 < v2)
+                                                            Le   -> B (v1 <= v2)
+                                                            Eq   -> B (v1 == v2)
+                                                            Ne   -> B (v1 /= v2)
+                                                            Ge   -> B (v1 >= v2)
+                                                            _    -> error "unknown operator..."
+                                                     _ -> error "these operators only work on integers"
 -- Is there a way to force that these will only happen for integers????
 -- Maybe I just have to deal with the list ops beforehand and then
 -- we will only reach this scenario afterwards...
