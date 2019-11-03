@@ -42,6 +42,7 @@ evalE env (Con str)  = case str of
 
 --Perhaps this needs another case? Like for closures or recfun or something?
 evalE env (Var v) = case E.lookup env v of
+  
                       Just r  -> r
                       Nothing -> error "could not find the variable in environment :("
 
@@ -130,18 +131,20 @@ evalE env (Recfun (Bind str _ arg_list e)) = Clos env str arg_list e
 evalE env (App e1 e2) = let v1 = evalE env e1
                             v2 = evalE env e2
                             in case v1 of
-                                 Clos env' fn [x] ef -> let env1 = E.add env' (fn, v1)
-                                                            env2 = E.add env1 (x, v2)
+                                 Clos env' fn [x] ef  -> let env1 = E.add env' (fn, v1)
+                                                             env2 = E.add env1 (x, v2)
                                                           in evalE env2 ef
-                                 _                   -> error "should be a function"
+                                 _                    -> error "should be a function"
 
 --- seems to work...
 
 --seem to be missing this case when testing task3 for partial ops
-evalE env (App (App (Var str) e1) e2) = let f = evalE (App (Var str) e1)
-                                          in App f1 e2 
+evalE env (App (App (Var str) e1) e2) = let v1 = E.lookup env str
+                                          in case v1 of
+                                               Clos env' _ args ef -> evalE
+                                          
                             
-
+evalE env (Prim Add) = error "damn it, Prim Add, that is silly"
 
                                             
 evalE env exp = error "We have managed to miss some cases! Damn!"
