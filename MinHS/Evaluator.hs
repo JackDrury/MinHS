@@ -136,7 +136,12 @@ evalE env (App e1 e2) = let v1 = evalE env e1
                                  _                   -> error "should be a function"
 
 --- seems to work...
+
+--seem to be missing this case when testing task3 for partial ops
+evalE env (App (App (Var str) e1) e2) = let f = evalE (App (Var str) e1)
+                                          in App f1 e2 
                             
 
+
                                             
-evalE env exp = error "implement me!"
+evalE env exp = error "We have managed to miss some cases! Damn!"
