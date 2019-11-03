@@ -1,0 +1,4 @@
+main :: Int
+          = let inc :: (Int -> Int)
+                      = recfun inc :: (Int -> Int) = (+) 1; 
+              in inc 2;
