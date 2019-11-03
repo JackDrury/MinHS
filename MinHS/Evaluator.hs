@@ -53,7 +53,12 @@ evalE env (App (Prim Neg) e) = let v = evalE env e
                                       I n -> I (-n)
                                       _   -> error "can only negate integers"
 
---We address the list operations (other than Nil):
+--We address the construction of a list:
+eval env (App (App (Cons "Cons") e1) e2) = case evalE env e1 of
+                                             I n -> Cons n (evalE env e2)
+                                             _   -> error "Sorry, can only have lists of ints"
+
+--We address the list operations (already dealt with Nil and Cons):
 evalE env (App (Prim operator) x) = case evalE env x of
                                 Nil       -> case operator of
                                                Head -> error "empty list has no head, boo!"
@@ -68,7 +73,7 @@ evalE env (App (Prim operator) x) = case evalE env x of
                                                _    -> error "op not defined for non-empty lists"
                                 _         -> error (" not defined ")
 -- will the last line stop integer primops from ever working?                                
-                              
+
 
 
 --We address the primitive operations for integers:
@@ -88,7 +93,6 @@ evalE env (App (App (Prim operator) e1) e2) = case (evalE env e1, evalE env e2) 
                                                             Le   -> B (v1 <= v2)
                                                             Eq   -> B (v1 == v2)
                                                             Ne   -> B (v1 /= v2)
-                                                            Ge   -> B (v1 >= v2)
                                                             _    -> error "unknown operator..."
                                           _            -> error "these operators only work on integers"
 -- Is there a way to force that these will only happen for integers????
