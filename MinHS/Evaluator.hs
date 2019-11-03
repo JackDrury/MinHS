@@ -95,9 +95,7 @@ evalE env (App (App (Prim operator) e1) e2) = case (evalE env e1, evalE env e2) 
                                                             Ne   -> B (v1 /= v2)
                                                             _    -> error "unknown operator..."
                                           _            -> error "these operators only work on integers"
--- Is there a way to force that these will only happen for integers????
--- Maybe I just have to deal with the list ops beforehand and then
--- we will only reach this scenario afterwards...
+
                                                       
 
 -- If expressions are very simple:
@@ -115,29 +113,27 @@ evalE env (Let e1 e2) = case e1 of
                                                                in evalE env' (Let bs e2)
                               (Bind str _ arg_list e3):bs -> let env' = E.add env (str, (Clos env str arg_list e3))
                                                                       in evalE env' (Let bs e2)
--- May need to expand closures so I can feed the arg_list into it... I think it doesn't work otherwise...   
 
 
-evalE env (Recfun (Bind str _ [] e)) =  let env' = E.add env (x,v)
-                                              v = evalE env' e
-                                         in v
+-- Recfun with no arguments as shown by liam in the lecture
+evalE env (Recfun (Bind str _ [] e)) =  let env' = E.add env (str,v)
+                                               v = evalE env' e
+                                          in v
 
-
+--Then simply converting a recfun into the closure form
 evalE env (Recfun (Bind str _ arg_list e)) = Clos env str arg_list e
 
-{- My attempt at just following the judgment in the spec exactly
+{- My attempt at just following the judgment in the spec exactly for App
 -}
-evalE env (App e1 e2) = let v1 = eval env e1
-                            v2 = eval env e2
+evalE env (App e1 e2) = let v1 = evalE env e1
+                            v2 = evalE env e2
                             in case v1 of
                                  Clos env' fn [x] ef -> let env1 = E.add env' (fn, v1)
                                                             env2 = E.add env1 (x, v2)
                                                           in evalE env2 ef
                                  _                   -> error "should be a function"
 
-
-                                   --we need to add some kind of x = e2 to the environment then
-                                                     -- evaluate????
+--- seems to work...
                             
 
                                             
