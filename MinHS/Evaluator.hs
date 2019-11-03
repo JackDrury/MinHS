@@ -144,7 +144,9 @@ evalE env (App (App (Var str) e1) e2) = let v1 = E.lookup env str
                                                Clos env' _ args ef -> evalE
                                           
                             
-evalE env (Prim Add) = error "damn it, Prim Add, that is silly"
+evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) "$x")
+
+evalE env (Prim Add) = error "prim add again..."
 
                                             
 evalE env exp = error "We have managed to miss some cases! Damn!"
