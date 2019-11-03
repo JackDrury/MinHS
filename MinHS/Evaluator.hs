@@ -48,12 +48,13 @@ evalE env (Var v) = case E.lookup env v of
 
 
 -- We address the special case of an integer primops with only one argument, negation:
-evalE env (App (Prim Neg e)) = let v = evalE env e
-                                 in I (-(v))
-
+evalE env (App (Prim Neg) e) = let v = evalE env e
+                                 in case v of
+                                      I n -> I (-n)
+                                      _   -> error "can only negate integers"
 
 --We address the list operations (other than Nil):
-evalE env (App (Prim op x)) = case evalE env x of
+evalE env (App (Prim op) x) = case evalE env x of
                                 Nil       -> case op of
                                                Head -> error "empty list has no head, boo!"
                                                Tail -> error "empty list has no tail, boo!"
@@ -72,7 +73,7 @@ evalE env (App (Prim op x)) = case evalE env x of
 
 --We address the primitive operations for integers:
 
-evalE env (App (App (Prim op e1) e2)) = case op of
+evalE env (App (App (Prim op) e1) e2) = case op of
                                           Add ->  let v1 = evalE env e1
                                                       v2 = evalE env e2
                                                     in I (v1 + v2)
@@ -147,4 +148,4 @@ evalE env (Recfun x e)
 
 -}
 
-evalE = error "implement me!"
+evalE env exp = error "implement me!"
