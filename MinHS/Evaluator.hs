@@ -90,7 +90,7 @@ evalE env (App (App (Prim operator) e1) e2) = case (evalE env e1, evalE env e2) 
                                                             Ne   -> B (v1 /= v2)
                                                             Ge   -> B (v1 >= v2)
                                                             _    -> error "unknown operator..."
-                                                     _ -> error "these operators only work on integers"
+                                          _            -> error "these operators only work on integers"
 -- Is there a way to force that these will only happen for integers????
 -- Maybe I just have to deal with the list ops beforehand and then
 -- we will only reach this scenario afterwards...
