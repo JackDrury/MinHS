@@ -10,6 +10,7 @@ data Value = I Integer
            | B Bool
            | Nil
            | Cons Integer Value
+           | Clos VEnv Exp
            -- Others as needed
            deriving (Show)
 
@@ -26,4 +27,124 @@ evaluate bs = evalE E.empty (Let bs (Var "main"))
 
 
 evalE :: VEnv -> Exp -> Value
+-- First we start with the eacy constants and boolean constructors
+-- We add Nil since it also fits the pattern
+evalE env (Num n)     = I n
+evalE env (Con str)  = case str of
+                          "Nil"   -> Nil
+                          "False" -> B False
+                          "True"  -> B True
+                          _       -> error "unknown constant"
+
+
+-- Then we need to know how to look up a variable in the environment
+-- (which was demonstrated in the lecture)
+
+--Perhaps this needs another case? Like for closures or recfun or something?
+evalE env (Var v) = case E.lookup env v of
+                      Just r  -> r
+                      Nothing -> error "could not find the variable in environment :("
+
+
+
+-- We address the special case of an integer primops with only one argument, negation:
+evalE env (App (Prim Neg e)) = let v = evalE env e
+                                 in I (-(v))
+
+
+--We address the list operations (other than Nil):
+evalE env (App (Prim op x)) = case evalE env x of
+                                Nil       -> case op of
+                                               Head -> error "empty list has no head, boo!"
+                                               Tail -> error "empty list has no tail, boo!"
+                                               Null -> B True
+                                               _    -> error "op not defined for empty list"
+                                         
+                                Cons v vs -> case op of
+                                               Head -> I v
+                                               Tail -> vs
+                                               Null -> B False
+                                               _    -> error "op not defined for non-empty lists"
+                                _         -> error (" not defined ")
+-- will the last line stop integer primops from ever working?                                
+                              
+
+
+--We address the primitive operations for integers:
+
+evalE env (App (App (Prim op e1) e2)) = case op of
+                                          Add ->  let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in I (v1 + v2)
+                                          Sub ->  let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in I (v1 - v2)
+                                          Mul ->  let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in I (v1 * v2)
+                                          Quot -> let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in if v2 == 0
+                                                        then error "div by zero ==> there is no god"
+                                                        else I (quot v1 v2)
+                                          Rem ->  let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in I (rem v1 v2)
+                                          Gt ->   let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in B (v1 > v2)
+                                          Ge ->   let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in B (v1 >= v2)
+                                          Lt ->   let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in B (v1 < v2)
+                                          Le ->   let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in B (v1 <= v2)
+                                          Eq ->   let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in B (v1 == v2)
+                                          Ne ->   let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in B (v1 /= v2)
+                                          Ge ->   let v1 = evalE env e1
+                                                      v2 = evalE env e2
+                                                    in B (v1 >= v2)
+                                          _  -> error "unknown operator..."
+-- Is there a way to force that these will only happen for integers????
+-- Maybe I just have to deal with the list ops beforehand and then
+-- we will only reach this scenario afterwards...
+                                                      
+
+-- If expressions are very simple:
+evalE env (If exp1 exp2 exp3) = case evalE env exp1 of
+                                   B False -> evalE env exp3
+                                   B True  -> evalE env exp2
+                                   _       -> error "Something weird happened, boolean logic is not sound"
+
+-- The abstract syntax defines let expressions with a list of Binds applied to an expression.
+-- When we evaluate things in the Let statement we need to add the let bindings to the environment.
+-- We want to enable multiple let bindings be applied to a single expression (TASK 4)
+evalE env (Let e1 e2) = case e1 of
+                              []                   -> evalE env e2
+                              (Bind str _ l e3):bs -> case l of
+                                                        []       -> let env' = E.add env (str, (evalE env e3))
+                                                                      in evalE env' (Let bs e2)
+                                                        arg_list -> let env' = E.add env (str, (Clos env e3))
+                                                                      in evalE env' (Let bs e2)
+-- May need to expand closures so I can feed the arg_list into it... I think it doesn't work otherwise...   
+
+
+{-                                      
+
+NOT EXACTLY CORRECT, BUT GIVES A GENERAL IDEA FOR ONE OF THE RECFUN JUDGEMENTS
+
+evalE env (Recfun x e)
+  let env' = E.add env (x,v)
+         v = evalE env' e
+    in v
+
+-}
+
 evalE = error "implement me!"
