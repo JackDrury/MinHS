@@ -119,7 +119,7 @@ evalE env (Let e1 e2) = case e1 of
 
 -- Recfun with no arguments as shown by liam in the lecture
 evalE env (Recfun (Bind str _ [] e)) =  let env' = E.add env (str,v)
-                                               v = evalE env' e
+                                            v = evalE env' e
                                           in v
 
 --Then simply converting a recfun into the closure form
