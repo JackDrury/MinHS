@@ -58,8 +58,10 @@ evalE env (App (App (Con "Cons") e1) e2) = case evalE env e1 of
                                              I n -> Cons n (evalE env e2)
                                              _   -> error "Sorry, can only have lists of ints"
 
---We address the list operations (already dealt with Nil and Cons):
+--We address the list operations (already dealt with Nil and Cons) and partial ops on integers.
+-- We treat partial ops as the generation of a function (closure)
 evalE env (App (Prim operator) x) = case evalE env x of
+                                I n       -> Clos env "$f" ["$x"] (App (App (Prim operator) (Var "$x")) (Num n))
                                 Nil       -> case operator of
                                                Head -> error "empty list has no head, boo!"
                                                Tail -> error "empty list has no tail, boo!"
