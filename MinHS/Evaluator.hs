@@ -37,8 +37,7 @@ evalE env (Con "True")  = B True
 
 
 -- A missing case according to a partial ops test:
-evalE env (App (Con "Cons") exp) = let v = evalE env exp
-                                     in  Clos env "$con" ["$x"] (App (App (Con "Cons") v) (Var "$x"))
+evalE env (App (Con "Cons") exp) =  Clos env "$con" ["$w"] (App (App (Con "Cons") exp) (Var "$w"))
 
   
 -- Then we need to know how to look up a variable in the environment
@@ -156,11 +155,11 @@ probably inf loop
 -- If Prim op is floating by itself, it must have been in an attempt to Apply it
 -- therefore we convert it to a closure/function that accepts one input variable
 -- of the form that we expect
-evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"))
+evalE env (Prim operator) = Clos env "$op" ["$y"] (App (Prim operator) (Var "$y"))
 
 
 --Another missing case:
-evalE env (Con "Cons") = Clos env "$cons" ["$x"] (App (Con "Cons") (Var "$x"))
+evalE env (Con "Cons") = Clos env "$cons" ["$z"] (App (Con "Cons") (Var "$z"))
 
 evalE env (Con str) = error ("unknown constant: " ++ (show str))
                                             
