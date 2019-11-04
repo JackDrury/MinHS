@@ -1,3 +1,12 @@
+{-
+
+z5199922
+
+COMP9164
+
+Assignment 1
+
+-}
 module MinHS.Evaluator where
 import qualified MinHS.Env as E
 import MinHS.Syntax
@@ -113,6 +122,7 @@ evalE env (If exp1 exp2 exp3) = case evalE env exp1 of
 -- The abstract syntax defines let expressions with a list of Binds applied to an expression.
 -- When we evaluate things in the Let statement we need to add the let bindings to the environment.
 -- We want to enable multiple let bindings be applied to a single expression (TASK 4)
+-- And to store closures in our environment
 evalE env (Let e1 e2) = case e1 of
                               []                          -> evalE env e2
                               (Bind str _ [] e3):bs       -> let env' = E.add env (str, (evalE env e3))
@@ -137,7 +147,7 @@ evalE env (App e1 e2) = let v1 = evalE env e1
                                  Clos env' fn [x] ef  -> let env1 = E.add env' (fn, v1)
                                                              env2 = E.add env1 (x, v2)
                                                           in evalE env2 ef
-                                 _                    -> error ((show v1) ++ "  should be a function")
+                                 _                    -> error ((show v1) ++ "  should be a function that takes input")
 
 --- seems to work...
 
