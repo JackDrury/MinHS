@@ -35,6 +35,7 @@ evalE env (Con str)  = case str of
                           "Nil"   -> Nil
                           "False" -> B False
                           "True"  -> B True
+                          "Cons"  -> Clos env "$cons" ["$x"] (Con "Cons"))                          
                           _       -> error ("unknown constant: " ++ (show str))
 
 {-
@@ -147,9 +148,18 @@ evalE env (App e1 e2) = let v1 = evalE env e1
 
 --- seems to work...
 
+{-
+                                 Clos env' fn []  ef  -> let env1 = E.add env' (fn, v1)
+                                                             env2 = E.addAll env' env
+                                                          in Clos env2 "$partial" [] (App  e2)
+
+probably inf loop
+-}
+
+
 --seem to be missing this case when testing task3 for partial ops
 
-evalE env (Prim operator) = Clos env "$op" [] (Prim operator)
+evalE env (Prim operator) = Clos env "$op" ["$x"] (Prim operator)
                                
 --evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"))
 
