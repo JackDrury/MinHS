@@ -28,7 +28,7 @@ instance PP.Pretty Value where
   pretty (B b) = datacon $ show b
   pretty (Nil) = datacon "Nil"
   pretty (Cons x v) = PP.parens (datacon "Cons" PP.<+> numeric x PP.<+> PP.pretty v)
-  pretty _ = undefined -- should not ever be used
+  pretty _ = undefined
 
 evaluate :: Program -> Value
 evaluate [Bind _ _ _ e] = evalE E.empty e
@@ -41,6 +41,7 @@ evalE :: VEnv -> Exp -> Value
 evalE env (Num n)     = I n
 
 evalE env (Con "Nil") = Nil
+
 evalE env (Con "False") = B False
 evalE env (Con "True")  = B True
 
@@ -122,13 +123,16 @@ evalE env (If exp1 exp2 exp3) = case evalE env exp1 of
 -- The abstract syntax defines let expressions with a list of Binds applied to an expression.
 -- When we evaluate things in the Let statement we need to add the let bindings to the environment.
 -- We want to enable multiple let bindings be applied to a single expression (TASK 4)
--- And to store closures in our environment
+
 evalE env (Let e1 e2) = case e1 of
                               []                          -> evalE env e2
                               (Bind str _ [] e3):bs       -> let env' = E.add env (str, (evalE env e3))
                                                                in evalE env' (Let bs e2)
+
+{-
                               (Bind str _ arg_list e3):bs -> let env' = E.add env (str, (Clos env str arg_list e3))
                                                                       in evalE env' (Let bs e2)
+-}
 
 
 -- Recfun with no arguments as shown by liam in the lecture
@@ -168,9 +172,12 @@ probably inf loop
 evalE env (Prim operator) = Clos env "$op" ["$y"] (App (Prim operator) (Var "$y"))
 
 
---Another missing case:
+--Another missing case, where we do a similar thing:
 evalE env (Con "Cons") = Clos env "$cons" ["$z"] (App (Con "Cons") (Var "$z"))
 
 evalE env (Con str) = error ("unknown constant: " ++ (show str))
                                             
 evalE env exp = error ("We have managed to miss some cases! Damn! here it is:  " ++ (show exp))
+
+
+-- Somewhere I have not correctly added to the environment, that is why I have var w, x, y, z, like a fool...
