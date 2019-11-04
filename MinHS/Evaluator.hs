@@ -29,19 +29,14 @@ evaluate bs = evalE E.empty (Let bs (Var "main"))
 evalE :: VEnv -> Exp -> Value
 -- First we start with the easy constants and boolean constructors
 -- We add Nil since it also fits the pattern
--- Then later Cons as we want to includ its partial eval
 evalE env (Num n)     = I n
 evalE env (Con str)  = case str of
                           "Nil"   -> Nil
                           "False" -> B False
                           "True"  -> B True
-                          "Cons"  -> Clos env "$cons" ["$x"] (Con "Cons"))                          
                           _       -> error ("unknown constant: " ++ (show str))
 
-{-
-                          "Cons"  -> Clos env "$cons" ["$x"] (App (Con "Cons") (Var "$x"))
 
--}
 -- A missing case according to a partial ops test:
 evalE env (App (Con "Cons") exp) = Clos env "$con" [] (App (Con "Cons") exp)
 
@@ -153,15 +148,21 @@ evalE env (App e1 e2) = let v1 = evalE env e1
                                                              env2 = E.addAll env' env
                                                           in Clos env2 "$partial" [] (App  e2)
 
+
 probably inf loop
 -}
 
 
 --seem to be missing this case when testing task3 for partial ops
+-- If Prim op is floating by itself, it must have been in an attempt to Apply it
+-- therefore we convert it to a closure/function that accepts one input variable
+-- of the form that we expect
+evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"))
 
-evalE env (Prim operator) = Clos env "$op" ["$x"] (Prim operator)
-                               
---evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"))
+
+--Another missing case:
+evalE env (Con "Cons") = Clos env "$cons" ["$x"] (App (Con "Cons") (Var "$x"))
+
 
                                             
 evalE env exp = error ("We have managed to miss some cases! Damn! here it is:  " ++ (show exp))
