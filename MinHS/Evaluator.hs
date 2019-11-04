@@ -29,11 +29,13 @@ evaluate bs = evalE E.empty (Let bs (Var "main"))
 evalE :: VEnv -> Exp -> Value
 -- First we start with the easy constants and boolean constructors
 -- We add Nil since it also fits the pattern
+-- Then later Cons as we want to includ its partial eval
 evalE env (Num n)     = I n
 evalE env (Con str)  = case str of
                           "Nil"   -> Nil
                           "False" -> B False
                           "True"  -> B True
+                          "Cons"  -> Clos env "$cons" ["$x"] (App (Con "Cons") (Var "$x"))
                           _       -> error "unknown constant"
 
 
@@ -139,14 +141,8 @@ evalE env (App e1 e2) = let v1 = evalE env e1
 --- seems to work...
 
 --seem to be missing this case when testing task3 for partial ops
-evalE env (App (App (Var str) e1) e2) = let v1 = E.lookup env str
-                                          in case v1 of
-                                               Clos env' _ args ef -> evalE
-                                          
                             
-evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) "$x")
-
-evalE env (Prim Add) = error "prim add again..."
+evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"))
 
                                             
-evalE env exp = error "We have managed to miss some cases! Damn!"
+evalE env exp = error "We have managed to miss some cases! Damn! here it is:  " ++ show exp
