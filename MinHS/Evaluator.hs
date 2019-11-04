@@ -75,7 +75,7 @@ evalE env (App (App (Con "Cons") e1) e2) = let v1 = evalE env e1
 --We address the list operations (already dealt with Nil and Cons) and partial ops on integers.
 -- We treat partial ops as the generation of a function (closure)
 evalE env (App (Prim operator) x) = case evalE env x of
-                                I n       -> Clos env "$f" ["$x"] (App (App (Prim operator) (Var "$x")) (Num n))
+                                I n       -> Clos env "$f" ["$x"] (App (App (Prim operator) (Num n)) (Var "$x"))
                                 Nil       -> case operator of
                                                Head -> error "empty list has no head, boo!"
                                                Tail -> error "empty list has no tail, boo!"
@@ -118,21 +118,19 @@ evalE env (App (App (Prim operator) e1) e2) = case (evalE env e1, evalE env e2) 
 evalE env (If exp1 exp2 exp3) = case evalE env exp1 of
                                    B False -> evalE env exp3
                                    B True  -> evalE env exp2
-                                   _       -> error "Something weird happened, boolean logic is not sound"
+                                   _       -> error "Something weird happened, boolean logic is broken"
 
 -- The abstract syntax defines let expressions with a list of Binds applied to an expression.
 -- When we evaluate things in the Let statement we need to add the let bindings to the environment.
 -- We want to enable multiple let bindings be applied to a single expression (TASK 4)
-
+-- We also want to be able to bind functions using let (which we turn into a closure)
 evalE env (Let e1 e2) = case e1 of
                               []                          -> evalE env e2
                               (Bind str _ [] e3):bs       -> let env' = E.add env (str, (evalE env e3))
                                                                in evalE env' (Let bs e2)
-
-{-
                               (Bind str _ arg_list e3):bs -> let env' = E.add env (str, (Clos env str arg_list e3))
                                                                       in evalE env' (Let bs e2)
--}
+
 
 
 -- Recfun with no arguments as shown by liam in the lecture
