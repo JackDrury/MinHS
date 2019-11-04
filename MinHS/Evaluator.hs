@@ -30,16 +30,14 @@ evalE :: VEnv -> Exp -> Value
 -- First we start with the easy constants and boolean constructors
 -- We add Nil since it also fits the pattern
 evalE env (Num n)     = I n
-evalE env (Con str)  = case str of
-                          "Nil"   -> Nil
-                          "False" -> B False
-                          "True"  -> B True
-                          _       -> error ("unknown constant: " ++ (show str))
+
+evalE env (Con "Nil") = Nil
+evalE env (Con "False") = B False
+evalE env (Con "True")  = B True
 
 
 -- A missing case according to a partial ops test:
-evalE env (App (Con "Cons") exp) = Clos env "$con" [] (App (Con "Cons") exp)
-
+evalE env (App (Con "Cons") exp) = Clos env "$con" ["$x"] (App (App (Con "Cons") exp) (Var "$x"))
 
   
 -- Then we need to know how to look up a variable in the environment
@@ -163,6 +161,6 @@ evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"
 --Another missing case:
 evalE env (Con "Cons") = Clos env "$cons" ["$x"] (App (Con "Cons") (Var "$x"))
 
-
+evalE env (Con str) = error ("unknown constant: " ++ (show str))
                                             
 evalE env exp = error ("We have managed to miss some cases! Damn! here it is:  " ++ (show exp))
