@@ -35,10 +35,17 @@ evalE env (Con str)  = case str of
                           "Nil"   -> Nil
                           "False" -> B False
                           "True"  -> B True
+                          _       -> error ("unknown constant: " ++ (show str))
+
+{-
                           "Cons"  -> Clos env "$cons" ["$x"] (App (Con "Cons") (Var "$x"))
-                          _       -> error "unknown constant"
+
+-}
+-- A missing case according to a partial ops test:
+evalE env (App (Con "Cons") exp) = Clos env "$con" [] (App (Con "Cons") exp)
 
 
+  
 -- Then we need to know how to look up a variable in the environment
 -- (which was demonstrated in the lecture)
 
@@ -141,8 +148,10 @@ evalE env (App e1 e2) = let v1 = evalE env e1
 --- seems to work...
 
 --seem to be missing this case when testing task3 for partial ops
-                            
-evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"))
+
+evalE env (Prim operator) = Clos env "$op" [] (Prim operator)
+                               
+--evalE env (Prim operator) = Clos env "$op" ["$x"] (App (Prim operator) (Var "$x"))
 
                                             
-evalE env exp = error "We have managed to miss some cases! Damn! here it is:  " ++ show exp
+evalE env exp = error ("We have managed to miss some cases! Damn! here it is:  " ++ (show exp))
