@@ -143,7 +143,7 @@ evalE env (App e1 e2) = let v1 = evalE env e1
                                  Clos env' fn [x] ef  -> let env1 = E.add env' (fn, v1)
                                                              env2 = E.add env1 (x, v2)
                                                           in evalE env2 ef
-                                 _                    -> error "should be a function"
+                                 _                    -> error ((show v1) ++ "  should be a function")
 
 --- seems to work...
 
