@@ -37,7 +37,8 @@ evalE env (Con "True")  = B True
 
 
 -- A missing case according to a partial ops test:
-evalE env (App (Con "Cons") exp) = Clos env "$con" ["$x"] (App (App (Con "Cons") exp) (Var "$x"))
+evalE env (App (Con "Cons") exp) = let v = evalE env exp
+                                     in  Clos env "$con" ["$x"] (App (App (Con "Cons") v) (Var "$x"))
 
   
 -- Then we need to know how to look up a variable in the environment
@@ -45,7 +46,6 @@ evalE env (App (Con "Cons") exp) = Clos env "$con" ["$x"] (App (App (Con "Cons")
 
 --Perhaps this needs another case? Like for closures or recfun or something?
 evalE env (Var v) = case E.lookup env v of
-  
                       Just r  -> r
                       Nothing -> error "could not find the variable in environment :("
 
